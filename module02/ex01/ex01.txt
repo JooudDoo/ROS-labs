@@ -1,0 +1,6 @@
+ROS_VERSION=2
+ROS_PYTHON_VERSION=3
+PWD=/home/sega/progs/ROS labs/module02/ex01
+ROS_LOCALHOST_ONLY=0
+ROS_DISTRO=humble
+OLDPWD=/home/sega/progs/ROS labs/module02
