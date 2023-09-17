@@ -1,1 +1,5 @@
 ros2_ws/
+build_time*
+build/
+install/
+log/
