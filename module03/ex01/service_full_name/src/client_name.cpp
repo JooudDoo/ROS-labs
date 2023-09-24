@@ -12,13 +12,12 @@ int main(int argc, char **argv)
   rclcpp::init(argc, argv);
 
   if (argc != 4) {
-      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "usage: full name client first name last");
+      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "usage: first_name name last_name");
       return 1;
   }
 
   std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("name_client");
-  rclcpp::Client<name_services::srv::Name>::SharedPtr client =
-    node->create_client<name_services::srv::Name>("full_name");
+  rclcpp::Client<name_services::srv::Name>::SharedPtr client = node->create_client<name_services::srv::Name>("full_name");
 
   auto request = std::make_shared<name_services::srv::Name::Request>();
   request->first_name = (argv[1]);
@@ -35,11 +34,10 @@ int main(int argc, char **argv)
 
   auto result = client->async_send_request(request);
 
-  if (rclcpp::spin_until_future_complete(node, result) ==
-    rclcpp::FutureReturnCode::SUCCESS)
-  {
+  if (rclcpp::spin_until_future_complete(node, result) == rclcpp::FutureReturnCode::SUCCESS) {
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Full name: %s", result.get()->full_name.c_str());
-  } else {
+  } 
+  else {
     RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service service_full_name");
   }
 
