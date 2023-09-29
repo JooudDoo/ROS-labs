@@ -1,5 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
-#include "name_services/srv/name.hpp"
+#include "service_full_name/srv/name.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -17,9 +17,9 @@ int main(int argc, char **argv)
   }
 
   std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("name_client");
-  rclcpp::Client<name_services::srv::Name>::SharedPtr client = node->create_client<name_services::srv::Name>("full_name");
+  rclcpp::Client<service_full_name::srv::Name>::SharedPtr client = node->create_client<service_full_name::srv::Name>("full_name");
 
-  auto request = std::make_shared<name_services::srv::Name::Request>();
+  auto request = std::make_shared<service_full_name::srv::Name::Request>();
   request->first_name = (argv[1]);
   request->name = (argv[2]);
   request->last_name = (argv[3]);

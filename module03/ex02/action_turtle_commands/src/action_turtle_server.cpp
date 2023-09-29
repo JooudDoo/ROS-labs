@@ -76,6 +76,8 @@ private:
     result->result = false;
     feedback->odom = global_odometer;
 
+    is_moving();
+
     if(goal->command == "forward"){ // Move forward
       RCLCPP_INFO(this->get_logger(), "Moving forward on %d meters", goal->s);
       int step_size = action_turtle_executer::FORWARD_STEP;
@@ -91,13 +93,13 @@ private:
     }
     else if (goal->command == "turn_right") { // Rotate right
       RCLCPP_INFO(this->get_logger(), "Rotating right on %d angle", goal->angle);
-      cmd_vel_msg.angular.z = -90;
+      cmd_vel_msg.angular.z = -M_PI/2;
       cmd_vel_pub_->publish(cmd_vel_msg);
       goal_handle->publish_feedback(feedback);
     }
     else if (goal->command == "turn_left") { // Rotate left
       RCLCPP_INFO(this->get_logger(), "Rotating left on %d angle", goal->angle);
-      cmd_vel_msg.angular.z = 90;
+      cmd_vel_msg.angular.z = M_PI/2;
       cmd_vel_pub_->publish(cmd_vel_msg);
       goal_handle->publish_feedback(feedback);
     }
