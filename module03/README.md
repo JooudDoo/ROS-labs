@@ -1,1 +1,1 @@
-[![Watch the video](/module03/assets/white.png)](/module03/assets/play.mov)
+[![Watch the video](/module03/assets/play.jpg)](/module03/assets/zipped.webm)
