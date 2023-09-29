@@ -3,8 +3,8 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "turtlesim/msg/pose.hpp"
 
-#define DISTANCE_ACCURACY  0.01
-#define ANGLE_ACCURACY    0.001
+#define DISTANCE_ACCURACY  0.1
+#define ANGLE_ACCURACY    0.1
 
 class MoveToGoal : public rclcpp::Node {
 public:
@@ -17,13 +17,12 @@ public:
             rclcpp::shutdown();
         }
         RCLCPP_INFO(this->get_logger(), "Succesfully create Move_to_goal node");
-        bool is_moved = move_to_goal(argv);
+        move_to_goal(argv);
     }
 
 private:
 
     void callback_cmd_pose(const turtlesim::msg::Pose& msg) {(&msg);};
-
 
     /*
         Sends a turtlesim Twist message and waits for its execution (Only then returns control)
@@ -36,6 +35,14 @@ private:
         cmd_vel_pub_->publish(vel_msg);
 
         is_moving();
+    }
+
+    void send_message_async(float linear_speed = 0, float angle_speed = 0){
+        geometry_msgs::msg::Twist vel_msg;
+
+        vel_msg.linear.x = linear_speed;
+        vel_msg.angular.z = angle_speed;
+        cmd_vel_pub_->publish(vel_msg);
     }
 
     /*
@@ -58,14 +65,50 @@ private:
         }
     }
 
-    bool check_accur(const float& val1, const float& val2){
-        return abs(val1) > abs(val2);
+    /*
+        Calculates distance to target from turtle
+    */
+    float calc_distance_from_turtle(const float x_target, const float y_target){
+        turtlesim::msg::Pose c_pos;
+        get_turtle_pos(&c_pos);
+
+        return calc_distance_btw(c_pos.x, c_pos.y, x_target, y_target);
     }
 
-    bool move_to_goal(char* argv[]){
+
+    /*
+        Calc distance between two points
+    */
+    float calc_distance_btw(const float x_1, const float y_1, const float x_2, const float y_2){
+        return sqrtf(powf(x_1 - x_2, 2) + powf(y_1 - y_2, 2));
+    }
+
+    /*
+        Calcs angle to rotate to target coords
+    */
+    float steer_angle(const float x_del, const float y_del){
+        return atan2f(y_del, x_del);
+    }
+
+    /*
+        Calcs angle for turtle to rotate towards coords
+    */
+    float calculate_angle_from_turtle(const float x_target, const float y_target){
+        turtlesim::msg::Pose c_pos;
+        get_turtle_pos(&c_pos);
+
+        float x_delta = (x_target-c_pos.x);
+        float y_delta = (y_target-c_pos.y);
+
+        return steer_angle(x_delta, y_delta) - c_pos.theta;
+    }
+
+    void move_to_goal(char* argv[]){
         float x_target = atof(argv[1]);
         float y_target = atof(argv[2]);
         float theta = atof(argv[3]);
+
+        rclcpp::Rate message_rate(std::chrono::milliseconds(1000));
 
         turtlesim::msg::Pose c_pos;
         get_turtle_pos(&c_pos);
@@ -73,28 +116,22 @@ private:
         RCLCPP_INFO(this->get_logger(), "Current position %f %f %f", c_pos.x, c_pos.y, c_pos.theta);
         RCLCPP_INFO(this->get_logger(), "Goal set to %f %f %f", x_target, y_target, theta);
 
-        float x_delta = (x_target-c_pos.x);
-        float y_delta = (y_target-c_pos.y);
-
-        float distance_to_target = sqrtf(powf(x_delta, 2) + powf(y_delta, 2));
-        float angle_to_goal      = atan2f(y_delta, x_delta) - c_pos.theta;
-
-        if (check_accur(distance_to_target, DISTANCE_ACCURACY)) {
-            if (check_accur(angle_to_goal, ANGLE_ACCURACY)) {
-                RCLCPP_INFO(this->get_logger(), "[0]\tRotate %f for targeting ", angle_to_goal);
-                send_message_sync(0, angle_to_goal);  // Rotate on angle to target
+        while(calc_distance_from_turtle(x_target, y_target) > DISTANCE_ACCURACY){
+            float ang = calculate_angle_from_turtle(x_target, y_target);
+            if(fabsf(ang) < ANGLE_ACCURACY){
+                RCLCPP_WARN(this->get_logger(), "Ignore angle %f", ang);
+                ang = 0;
             }
-            RCLCPP_INFO(this->get_logger(), "[1]\tMoving %f to goal", distance_to_target);
-            send_message_sync(distance_to_target); // Move to target
+            float dis = calc_distance_from_turtle(x_target, y_target) * 0.5;
+            send_message_async(dis, ang);
+            message_rate.sleep();
         }
 
         get_turtle_pos(&c_pos);
-        float target_angle = theta - c_pos.theta;
 
-        if(check_accur(target_angle, ANGLE_ACCURACY)){
-            RCLCPP_INFO(this->get_logger(), "[2]\tRotate %f for goal", target_angle);
-            send_message_sync(0, target_angle); // Rotate to target angle
-        }
+        float target_angle = theta - c_pos.theta;
+        send_message_sync(0, target_angle); // Rotate to target angle
+
 
         get_turtle_pos(&c_pos);
         RCLCPP_INFO(this->get_logger(), "End position %f %f %f", c_pos.x, c_pos.y, c_pos.theta);
