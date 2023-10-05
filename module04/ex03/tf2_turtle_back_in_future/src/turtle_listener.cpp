@@ -15,7 +15,9 @@ public:
     {
         target_frame_     = this->declare_parameter<std::string>("target_frame", "turtle1");
         turtle_name_      = this->declare_parameter<std::string>("turtle_name", "turtle2");
+        time_delay_       = this->declare_parameter<double>("delay", 2);
         RCLCPP_INFO(this->get_logger(), "Set target frame: %s", target_frame_.c_str());
+        RCLCPP_INFO(this->get_logger(), "Set time delay: %lf", time_delay_);
         RCLCPP_INFO(this->get_logger(), "Set turtle name: %s", turtle_name_.c_str());
 
 
@@ -44,6 +46,7 @@ private:
     std::shared_ptr<tf2_ros::TransformListener> tf_trans_listener{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 
+    double time_delay_;
     std::string target_frame_;
     std::string turtle_name_;
 
@@ -80,8 +83,11 @@ private:
 
         geometry_msgs::msg::TransformStamped trans_msg;
 
+        rclcpp::Time now = this->get_clock()->now();
+        rclcpp::Time when = now - rclcpp::Duration(time_delay_, 0);
+
         try { // Проверяем есть ли возможность трансформации между целевым кадром и рабочим
-            trans_msg = tf_buffer_->lookupTransform(workingframe_name, targetframe_name, tf2::TimePointZero);
+            trans_msg = tf_buffer_->lookupTransform(workingframe_name, now, targetframe_name, when, "world", std::chrono::milliseconds(50));
             // tf2::timePointZero - благодаря ему вернется последнее доступное преобразование
         } catch (...){
             RCLCPP_WARN(this->get_logger(), "Couldn't transform %s to %s", targetframe_name.c_str(), workingframe_name.c_str());
