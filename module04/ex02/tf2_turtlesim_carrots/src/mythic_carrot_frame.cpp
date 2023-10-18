@@ -8,24 +8,27 @@ public:
         
         radius_                = this->declare_parameter<double>("radius", 1);
         direction_of_rotation_ = this->declare_parameter<double>("direction_of_rotation", 1);
+        RCLCPP_INFO(this->get_logger(), "Set radius %f", radius_);
+
         tf_trans_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
         timer_                = this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&MythicCarrotBroadcaster::timer_callback, this));
 
-        for(double m = -2; m < 2; m+=0.1){
-            x_points_.push_back(m);
+        for(double m = 0; m < 2 * M_PI; m+=0.1){
+            theta_.push_back(m);
         }
+        
     }
 
 
 private:
 
     void timer_callback(){
-        point_index+=1;
-        point_index %= x_points_.size();
+        point_index %= theta_.size();
+        point_index += 1;
 
         rclcpp::Time now = this->get_clock()->now();
-        double x = x_points_[point_index];
-        double y = radius_ - pow(x, 2);
+        double x = radius_ * sin(theta_[point_index]);
+        double y = radius_ * cos(theta_[point_index]);
 
         geometry_msgs::msg::TransformStamped trans_msg;
 
@@ -46,7 +49,7 @@ private:
 
     double direction_of_rotation_;
     double radius_;
-    std::vector<double> x_points_;
+    std::vector<double> theta_;
     size_t point_index;
     rclcpp::TimerBase::SharedPtr timer_;
     std::shared_ptr<tf2_ros::TransformBroadcaster> tf_trans_broadcaster_;

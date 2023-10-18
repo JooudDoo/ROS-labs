@@ -33,7 +33,7 @@ def generate_launch_description():
             executable='turtle_listener',
             name='listener',
             parameters=[
-                {'target_frame': "turtle1",
+                {'target_frame': "carrot1",
                  'turtle_name': "turtle2"}
             ]
         ),
