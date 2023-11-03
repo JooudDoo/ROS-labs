@@ -14,10 +14,13 @@ find_package(sensor_msgs REQUIRED)
 
 
 add_executable(simple_dsensor src/depth_sensor_stopper.cpp)
+add_executable(simple_dsensor_points src/depth_sensor_stopper.cpp)
 ament_target_dependencies(simple_dsensor rclcpp geometry_msgs sensor_msgs)
+ament_target_dependencies(simple_dsensor_points rclcpp geometry_msgs sensor_msgs)
 
 install(TARGETS
 simple_dsensor
+simple_dsensor_points
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

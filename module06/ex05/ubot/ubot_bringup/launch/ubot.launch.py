@@ -59,7 +59,7 @@ def generate_launch_description():
 
     dsensor_controller = Node(
         package="simple_dsensor_control",
-        executable='simple_dsensor'
+        executable='simple_dsensor_points'
     )
 
     # Takes the description and joint angles as inputs and publishes the 3D poses of the robot links
